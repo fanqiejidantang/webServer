@@ -73,7 +73,7 @@ int main(int argc, char* argv[]){
     struct sockaddr_in address;
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(9999);
+    address.sin_port = htons(port);
     ret = bind(listenfd, (struct sockaddr*)&address, sizeof(address));
     if(ret == -1){
         perror("bind");
@@ -93,6 +93,7 @@ int main(int argc, char* argv[]){
     
     while(true){
         int num = epoll_wait(epollfd, events, MAX_EVENT_NUMBER, -1);
+        
         if((num)<0 && (errno != EINTR)){
             printf("epoll failure\n");
             break;
@@ -107,16 +108,44 @@ int main(int argc, char* argv[]){
                 socklen_t client_addrlen = sizeof(client_address);
                 int connfd = accept(listenfd, (struct sockaddr*)&client_address, &client_addrlen);
 
+                printf("m_user_count : %d\n", http_conn::m_user_count);
                 if(http_conn::m_user_count >= MAX_FD){
                     //目前连接数满了
                     //给客户端写一个信息：服务器正忙。
                     close(connfd);
                     continue;
                 }
+
+                //新的客户的数据初始化， 放到数组中
+                users[connfd].init(connfd, client_address);
+            }
+            else if(events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)){
+                //对方异常断开或者错误等事件
+                printf("异常断开");
+                users[sockfd].closs_conn();
+            }else if(events[i].events & EPOLLIN){
+                //有读的事件发生
+                // printf("有读的事件发生");
+                if(users[sockfd].read()){
+                    //一次性把所有数据都读完
+                    pool->append(users+sockfd);
+                }else{
+                    users[sockfd].closs_conn();
+                }
+            }else if(events[i].events & EPOLLOUT){
+                if(!users[sockfd].write()){
+                    //一次性写完所有数据
+                    users[sockfd].closs_conn();
+                }
             }
         }
 
     }
+    
+    close(epollfd);
+    close(listenfd);
+    delete [] users;
+    delete [] pool;
 
     return 0;
 }

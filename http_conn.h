@@ -24,10 +24,14 @@ public:
     static int m_user_count; //统计用户的数量
 
 
-    http_conn();
-    ~http_conn();
-
+    http_conn(){}
+    ~http_conn(){}
+    void init(int sockfd, const sockaddr_in& addr);//初始化新接收的连接
+    void closs_conn();//关闭连接
+    bool read();//非阻塞的读
+    bool write(); //非阻塞的写
     void process();//处理客户端的请求
+
 private:
     int m_sockfd; //该HTTP连接的socket
     sockaddr_in m_address;

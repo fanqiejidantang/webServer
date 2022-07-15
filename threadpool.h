@@ -32,12 +32,12 @@ private:
 
     sem m_queuestat;//信号量用来判断是否有任务来处理
     
-    bool m_stop//是否结束线程
+    bool m_stop;//是否结束线程
 
 };
 
 template<typename T>
-threadpool<T>::threadpool(int thread_number = 8, int max_requests = 10000) :
+threadpool<T>::threadpool(int thread_number, int max_requests):
     m_thread_number(thread_number), m_max_requests(max_requests),
     m_stop(false), m_threads(NULL) {
         if((thread_number<=0) || (max_requests<=0)){
@@ -48,7 +48,7 @@ threadpool<T>::threadpool(int thread_number = 8, int max_requests = 10000) :
             throw std::exception();
         }
 
-        for(int i=0; i<thread_number, ++i){
+        for(int i=0; i<thread_number;++i){
             printf("create the %dth thread\n", i);
 
             if(pthread_create(m_threads+i, NULL, worker, this) !=0){
