@@ -88,7 +88,7 @@ int main(int argc, char* argv[]){
     int epollfd = epoll_create(5);
 
     //将监听的文件描述符添加到epoll对象中
-    addfd(epollfd, listenfd, false);
+    addfd(epollfd, listenfd, false);//lisetnfd 一般不边缘触发
     http_conn::m_epollfd = epollfd;
     
     while(true){
